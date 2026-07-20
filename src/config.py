@@ -4,9 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ollama_api_key: str
     llm_model: str
-    embedding_model: str
     ollama_base_url: str
-    ollama_embedding_url: str
+    hf_token: str
+    hf_embedding_model: str = "google/embeddinggemma-300m"
     data_dir: str = "./data"
     sessions_file: str = "./data/sessions.json"
     faiss_dir: str = "./data/faiss_indexes"

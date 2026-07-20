@@ -1,8 +1,9 @@
 import logging
 from typing import Optional
-from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_ollama import ChatOllama
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -11,12 +12,12 @@ class LLMService:
     def __init__(self):
         self.llm = ChatOllama(
             model=settings.llm_model,
-            base_url=str(settings.ollama_base_url),
+            base_url=settings.ollama_base_url,
             client_kwargs={"headers": {"Authorization": f"Bearer {settings.ollama_api_key}"}}
         )
-        self.embeddings = OllamaEmbeddings(
-            model=settings.embedding_model,
-            base_url=str(settings.ollama_embedding_url)
+        self.embeddings = HuggingFaceEndpointEmbeddings(
+            model=settings.hf_embedding_model,
+            provider="hf-inference"
         )
         self.parser = StrOutputParser()
         
@@ -33,7 +34,7 @@ class LLMService:
         self.standard_chain = self.standard_prompt | self.llm | self.parser
         self.rag_chain = self.rag_prompt | self.llm | self.parser
 
-    def get_embeddings(self) -> OllamaEmbeddings:
+    def get_embeddings(self) -> HuggingFaceEndpointEmbeddings:
         return self.embeddings
 
     def generate_response(self, input_text: str, context: Optional[str] = None) -> str:

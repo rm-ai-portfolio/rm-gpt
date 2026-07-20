@@ -1,10 +1,16 @@
 import streamlit as st
 import logging
+import os
+from dotenv  import load_dotenv
 from services.llm_service import LLMService
 from services.rag_service import RAGService
 from services.session_manager import SessionManager
 
 logging.basicConfig(level=logging.INFO)
+
+load_dotenv()
+
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HF_TOKEN")
 
 def init_state() -> None:
     if "llm_service" not in st.session_state:

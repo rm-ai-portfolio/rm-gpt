@@ -3,8 +3,11 @@ import tempfile
 import logging
 from typing import Dict, List, Optional
 from langchain_community.vectorstores import FAISS
-from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
+# from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_unstructured import UnstructuredLoader
+
+from unstructured.partition.auto import partition
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -16,21 +19,13 @@ class RAGService:
         self._vector_store_cache: Dict[str, Optional[FAISS]] = {}
 
     def _get_loader(self, tmp_path: str, file_ext: str):
-        file_ext = file_ext.lower()
-        if file_ext == ".pdf":
-            return PyPDFLoader(tmp_path)
-        elif file_ext == ".docx":
-            return Docx2txtLoader(tmp_path)
-        elif file_ext == ".doc":
-            try:
-                from langchain_community.document_loaders import UnstructuredWordDocumentLoader
-                return UnstructuredWordDocumentLoader(tmp_path)
-            except ImportError:
-                raise ImportError(
-                    ".doc support requires 'unstructured' and 'python-docx'. "
-                    "Install: pip install unstructured python-docx"
-                )
-        raise ValueError(f"Unsupported file type: {file_ext}")
+        return UnstructuredLoader(
+            file_path=tmp_path,
+            chunking_strategy="by_title",
+            max_characters=500,
+            new_after_n_chars=450,
+            combine_under_n_chars=100
+        )
 
     def process_files(self, uploaded_files: list) -> FAISS:
         all_chunks = []
@@ -41,9 +36,11 @@ class RAGService:
                 tmp_path = tmp_file.name
 
             try:
+                #Setup loqader as per file type(.pdf, .doc, .docx)
                 loader = self._get_loader(tmp_path, file_ext)
-                docs = loader.load()
-                chunks = self.text_splitter.split_documents(docs)
+
+                chunks = loader.load()
+               
                 all_chunks.extend(chunks)
             finally:
                 os.unlink(tmp_path)
