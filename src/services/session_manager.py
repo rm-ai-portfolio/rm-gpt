@@ -36,10 +36,14 @@ class SessionManager:
             logger.error(f"Failed to load sessions: {e}")
 
     def _save_sessions(self) -> None:
-        with self._lock:
-            data = {sid: session.model_dump() for sid, session in self.sessions.items()}
-            with open(settings.sessions_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=4)
+        try:
+            with self._lock:
+                data = {sid: session.model_dump() for sid, session in self.sessions.items()}
+                with open(settings.sessions_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=4)
+                    logger.info("Session saved sucessfully")
+        except Exception as e:
+            logger.exception("Save session failed", e)
 
     def create_new_session(self) -> str:
         session_id = f"chat_{uuid.uuid4().hex[:8]}"
@@ -66,8 +70,12 @@ class SessionManager:
             self._save_sessions()
 
     def update_session_files(self, file_names: List[str]) -> None:
-        session = self.get_active_session()
-        if session:
-            session.file_names = file_names
-            session.has_vector_store = True
-            self._save_sessions()
+        try:
+            session = self.get_active_session()
+            if session:
+                session.file_names = file_names
+                session.has_vector_store = True
+                self._save_sessions()
+                logger.info("Session updated successfully")
+        except Exception as e:
+            logger.exception("Updates session file fAILED", e)

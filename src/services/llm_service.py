@@ -5,6 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_ollama import ChatOllama
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from config import settings
+from services.embeddings_service import HFInferenceEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,9 @@ class LLMService:
             base_url=settings.ollama_base_url,
             client_kwargs={"headers": {"Authorization": f"Bearer {settings.ollama_api_key}"}}
         )
-        self.embeddings = HuggingFaceEndpointEmbeddings(
+        self.embeddings = HFInferenceEmbeddings(
             model=settings.hf_embedding_model,
-            provider="hf-inference"
+            api_key=settings.hf_token
         )
         self.parser = StrOutputParser()
         
